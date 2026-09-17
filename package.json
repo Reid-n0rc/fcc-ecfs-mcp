@@ -1,6 +1,6 @@
 {
   "name": "fcc-ecfs-mcp",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "MCP server exposing the FCC ECFS (Electronic Comment Filing System) public API",
   "type": "module",
   "main": "dist/index.js",

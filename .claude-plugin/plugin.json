@@ -2,7 +2,7 @@
   "name": "fcc-ecfs",
   "displayName": "FCC ECFS Tools",
   "description": "MCP server and slash commands for the FCC's Electronic Comment Filing System (ECFS) public API",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": {
     "name": "Reid Crowe"
   },

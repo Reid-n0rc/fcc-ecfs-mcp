@@ -128,7 +128,7 @@ export const rawRequestSchema = z.object({
         .describe("Query parameters to send, excluding api_key (added automatically)."),
 });
 export async function rawRequest(input) {
-    if (input.path.includes("api_key")) {
+    if (input.path.includes("api_key") || "api_key" in (input.params ?? {})) {
         throw new Error("Do not pass api_key manually; it is added automatically.");
     }
     return ecfsGet(input.path, (input.params ?? {}));

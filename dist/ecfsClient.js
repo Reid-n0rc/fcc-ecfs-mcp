@@ -18,8 +18,8 @@ export class MissingApiKeyError extends Error {
     }
 }
 function getApiKey() {
-    const key = process.env.ECFS_API_KEY;
-    if (!key || key.trim().length === 0) {
+    const key = process.env.ECFS_API_KEY?.trim();
+    if (!key || key.length === 0) {
         throw new MissingApiKeyError();
     }
     return key;

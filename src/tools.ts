@@ -162,7 +162,7 @@ export const rawRequestSchema = z.object({
 export type RawRequestInput = z.infer<typeof rawRequestSchema>;
 
 export async function rawRequest(input: RawRequestInput) {
-  if (input.path.includes("api_key")) {
+  if (input.path.includes("api_key") || "api_key" in (input.params ?? {})) {
     throw new Error("Do not pass api_key manually; it is added automatically.");
   }
   return ecfsGet(input.path, (input.params ?? {}) as QueryParams);

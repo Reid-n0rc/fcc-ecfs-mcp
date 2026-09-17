@@ -45,6 +45,18 @@ describe("ecfsGet", () => {
     await expect(ecfsGet("/filings")).rejects.toBeInstanceOf(MissingApiKeyError);
   });
 
+  it("trims surrounding whitespace from the API key before using it", async () => {
+    process.env.ECFS_API_KEY = "  test-key-123\n";
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(jsonResponse({ filing: [] }));
+
+    await ecfsGet("/filings");
+
+    const calledUrl = new URL(fetchSpy.mock.calls[0][0] as string);
+    expect(calledUrl.searchParams.get("api_key")).toBe("test-key-123");
+  });
+
   it("appends api_key and query params to the request URL", async () => {
     process.env.ECFS_API_KEY = "test-key-123";
     const fetchSpy = vi

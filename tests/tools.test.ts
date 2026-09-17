@@ -204,4 +204,11 @@ describe("rawRequest", () => {
     );
     expect(ecfsGetMock).not.toHaveBeenCalled();
   });
+
+  it("rejects api_key passed inside params, not just path", async () => {
+    await expect(
+      rawRequest({ path: "/filings", params: { api_key: "x" } }),
+    ).rejects.toThrow(/Do not pass api_key/);
+    expect(ecfsGetMock).not.toHaveBeenCalled();
+  });
 });

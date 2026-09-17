@@ -12,7 +12,7 @@ const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
 loadDotenv({ path: path.join(projectRoot, ".env") });
 const server = new McpServer({
     name: "fcc-ecfs-mcp",
-    version: "0.2.0",
+    version: "0.3.0",
 });
 function toToolResult(data) {
     return {
