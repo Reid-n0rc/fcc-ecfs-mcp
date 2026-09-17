@@ -107,6 +107,32 @@ claude --plugin-dir .
 Note that the plugin loader never runs `npm run build` on install — it only runs
 `npm ci` to fetch dependencies. `dist/` must be committed and up to date before pushing.
 
+## Known limitation: document/PDF content isn't fetchable
+
+The ECFS public API (this server's only data source) is **metadata-only**. No endpoint
+returns a document's file bytes or extracted text — not `/filings`, not `/filing/{id}`,
+and not `/documents` (see `ecfs_search_documents`'s `Document` schema: it has fields like
+`file_name`, `page_count`, `byte_size`, `ocr_flag`, and a `location` URL, but no text/content
+field).
+
+That `location` field (and the `documents[].src` field on a `Filing`) points at
+`https://www.fcc.gov/ecfs/document/{id_submission}/{n}` — the ECFS *website*, a separate
+system from the public API, sitting behind Akamai bot protection. Direct HTTP requests to
+it — via `curl`, this server, or any other non-browser HTTP client — return `403
+Forbidden` regardless of headers (user-agent, `Referer`, `Accept-Language`, etc. make no
+difference; the block operates below the HTTP layer, on the TLS/network fingerprint).
+
+This project will not attempt to work around that protection — not via TLS-fingerprint
+impersonation, proxying, or other anti-bot-evasion tooling, even though it's technically
+possible and ECFS's underlying content is public. If you need a document's actual text:
+
+- Open the `location`/`src` URL in a real browser (a human doing this is exactly the
+  traffic Akamai lets through).
+- Automate a real, visible browser session (e.g. Claude Code's Chrome extension) rather
+  than a bare HTTP client — the request then carries a browser's genuine fingerprint
+  instead of one constructed to fake it.
+- Download the PDF yourself and read/summarize it locally.
+
 ## Security notes
 
 - The API key is read only from `process.env.ECFS_API_KEY` — it is never accepted as a
