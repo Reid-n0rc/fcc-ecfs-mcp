@@ -39,6 +39,17 @@ export function redactUrl(url: string): string {
   return parsed.toString();
 }
 
+/**
+ * Redacts any occurrence of the literal API key value from raw response text.
+ * Some ECFS response bodies echo the key back verbatim — e.g. `type=downloadplan`
+ * responses embed it in each bucket's `suggested_api_call` URL — so redactUrl()
+ * (which only covers URLs we construct for error messages) isn't enough on its own.
+ */
+function redactApiKeyFromText(text: string, apiKey: string): string {
+  if (!apiKey) return text;
+  return text.split(apiKey).join("REDACTED");
+}
+
 export type QueryParams = Record<string, string | number | boolean | undefined>;
 
 function buildUrl(path: string, params: QueryParams): URL {
@@ -61,6 +72,7 @@ export async function ecfsGet<T = unknown>(
   params: QueryParams = {},
 ): Promise<T> {
   const url = buildUrl(path, params);
+  const apiKey = url.searchParams.get("api_key") ?? "";
   let response: Response;
   try {
     response = await fetch(url, {
@@ -74,7 +86,8 @@ export async function ecfsGet<T = unknown>(
     );
   }
 
-  const text = await response.text();
+  const rawText = await response.text();
+  const text = redactApiKeyFromText(rawText, apiKey);
   let body: unknown;
   try {
     body = text.length > 0 ? JSON.parse(text) : undefined;

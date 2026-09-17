@@ -4,6 +4,8 @@ import path from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
+  getDownloadPlan,
+  getDownloadPlanSchema,
   getFiling,
   getFilingSchema,
   listInboxes,
@@ -94,6 +96,28 @@ server.registerTool(
   async (input) => {
     try {
       return toToolResult(await searchProceedings(input));
+    } catch (error) {
+      return toErrorResult(error);
+    }
+  },
+);
+
+server.registerTool(
+  "ecfs_get_download_plan",
+  {
+    title: "Get an ECFS download plan for a filings query",
+    description:
+      "Get a download plan for a filings search — the same filters as ecfs_search_filings, " +
+      "but instead of a page of results, returns date_submission-range buckets each with a " +
+      "suggested_api_call safe to run to exhaustively page a large docket. Use this before " +
+      "ecfs_search_filings for dockets with thousands of filings (e.g. a heavily-commented " +
+      "NPRM): plain offset/limit paging over a large result set can return duplicate or " +
+      "missing filings, which the download plan's date-bucketed queries avoid.",
+    inputSchema: getDownloadPlanSchema.shape,
+  },
+  async (input) => {
+    try {
+      return toToolResult(await getDownloadPlan(input));
     } catch (error) {
       return toErrorResult(error);
     }

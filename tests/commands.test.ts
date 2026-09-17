@@ -12,6 +12,7 @@ const KNOWN_TOOLS = [
   "ecfs_search_proceedings",
   "ecfs_search_documents",
   "ecfs_list_inboxes",
+  "ecfs_get_download_plan",
   "ecfs_raw_request",
 ];
 
@@ -21,6 +22,7 @@ const EXPECTED_COMMANDS = [
   "fcc-search-proceedings.md",
   "fcc-get-filing.md",
   "fcc-list-documents.md",
+  "fcc-download-plan.md",
 ];
 
 function parseFrontmatter(content: string): { description?: string; body: string } {

@@ -14,6 +14,7 @@ across all of them.
 | `ecfs_search_filings` | `GET /filings` | Search filings by free text, proceeding/docket number, filer name, submission type, or date received. |
 | `ecfs_get_filing` | `GET /filing/{id}` | Fetch a single filing by its submission ID. |
 | `ecfs_search_proceedings` | `GET /proceedings` | Search proceedings (dockets), e.g. by docket number. |
+| `ecfs_get_download_plan` | `GET /filings?type=downloadplan` | Get date-bucketed queries safe for exhaustively paging a large docket (e.g. a heavily-commented NPRM) — plain offset/limit paging over a big result set can return duplicate or missing filings. |
 | `ecfs_search_documents` | `GET /documents` | List a filing's document/attachment metadata (filename, page count, byte size, OCR status) by submission ID. Does not return file contents — ECFS's public API is metadata-only; the actual PDF is served from the (bot-protected) ECFS website. |
 | `ecfs_list_inboxes` | `GET /inbox` | List the available inboxes for non-docketed filings. |
 | `ecfs_raw_request` | any | Escape hatch: call any ECFS path/query params not covered above. `api_key` is added automatically. |
@@ -85,6 +86,7 @@ a plugin, they're namespaced under `fcc-ecfs`:
 | `/fcc-ecfs:fcc-search-proceedings <docket>` | Look up a proceeding/docket by number or name. |
 | `/fcc-ecfs:fcc-get-filing <submission id>` | Fetch a single filing by its submission ID. |
 | `/fcc-ecfs:fcc-list-documents <submission id(s)>` | List document/attachment metadata for one or more filings. |
+| `/fcc-ecfs:fcc-download-plan <args>` | Get a download plan for exhaustively paging a large docket. |
 
 ## Development
 
@@ -110,7 +112,9 @@ Note that the plugin loader never runs `npm run build` on install — it only ru
 - The API key is read only from `process.env.ECFS_API_KEY` — it is never accepted as a
   tool input, so it cannot be echoed back into a model's context or transcript.
 - Error messages and thrown errors redact the `api_key` query parameter before they are
-  ever logged or returned to a client.
+  ever logged or returned to a client. Response *bodies* are also scrubbed of the literal
+  key value before being returned — some ECFS response types (e.g. `type=downloadplan`)
+  echo the key back verbatim in generated URLs, so URL-only redaction isn't sufficient.
 - `.env` is git-ignored; only `.env.example` (no real key) is committed.
 
 ## License

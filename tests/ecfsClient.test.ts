@@ -118,6 +118,31 @@ describe("ecfsGet", () => {
     }
   });
 
+  it("redacts the api key when the response body echoes it back", async () => {
+    process.env.ECFS_API_KEY = "leak-me-not-in-body";
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      jsonResponse({
+        download_plan: {
+          buckets: [
+            {
+              suggested_api_call: [
+                "https://publicapi.fcc.gov/ecfs/filings?api_key=leak-me-not-in-body&limit=5",
+              ],
+            },
+          ],
+        },
+      }),
+    );
+
+    const result = await ecfsGet<{
+      download_plan: { buckets: Array<{ suggested_api_call: string[] }> };
+    }>("/filings", { type: "downloadplan" });
+
+    const serialized = JSON.stringify(result);
+    expect(serialized).not.toContain("leak-me-not-in-body");
+    expect(result.download_plan.buckets[0].suggested_api_call[0]).toContain("api_key=REDACTED");
+  });
+
   it("handles a non-JSON error body gracefully", async () => {
     process.env.ECFS_API_KEY = "test-key-123";
     vi.spyOn(globalThis, "fetch").mockResolvedValue(

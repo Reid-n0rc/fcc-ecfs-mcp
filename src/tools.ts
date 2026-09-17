@@ -38,8 +38,16 @@ export const searchFilingsSchema = z.object({
 });
 export type SearchFilingsInput = z.infer<typeof searchFilingsSchema>;
 
-export async function searchFilings(input: SearchFilingsInput) {
-  const params: QueryParams = {
+function buildFilingFilterParams(input: {
+  q?: string;
+  proceedings_name?: string;
+  filers_name?: string;
+  submissiontype_description?: string;
+  date_received_since?: string;
+  date_received_until?: string;
+  sort?: string;
+}): QueryParams {
+  return {
     q: input.q,
     "proceedings.name": input.proceedings_name,
     "filers.name": input.filers_name,
@@ -47,8 +55,39 @@ export async function searchFilings(input: SearchFilingsInput) {
     "date_received[since]": input.date_received_since,
     "date_received[until]": input.date_received_until,
     sort: input.sort,
+  };
+}
+
+export async function searchFilings(input: SearchFilingsInput) {
+  const params: QueryParams = {
+    ...buildFilingFilterParams(input),
     limit: input.limit,
     offset: input.offset,
+  };
+  return ecfsGet("/filings", params);
+}
+
+export const getDownloadPlanSchema = z.object({
+  q: searchFilingsSchema.shape.q,
+  proceedings_name: searchFilingsSchema.shape.proceedings_name,
+  filers_name: searchFilingsSchema.shape.filers_name,
+  submissiontype_description: searchFilingsSchema.shape.submissiontype_description,
+  date_received_since: searchFilingsSchema.shape.date_received_since,
+  date_received_until: searchFilingsSchema.shape.date_received_until,
+  sort: searchFilingsSchema.shape.sort,
+});
+export type GetDownloadPlanInput = z.infer<typeof getDownloadPlanSchema>;
+
+/**
+ * A large docket's filing count can exceed what offset/limit paging can
+ * reliably enumerate (results can duplicate or drop entries). The download
+ * plan instead buckets the same query by date_submission range, each with a
+ * "suggested_api_call" that's safe to run to exhaustively page the docket.
+ */
+export async function getDownloadPlan(input: GetDownloadPlanInput) {
+  const params: QueryParams = {
+    ...buildFilingFilterParams(input),
+    type: "downloadplan",
   };
   return ecfsGet("/filings", params);
 }

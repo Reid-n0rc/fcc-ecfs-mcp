@@ -10,6 +10,7 @@ vi.mock("../src/ecfsClient.js", async () => {
 });
 
 import {
+  getDownloadPlan,
   getFiling,
   listInboxes,
   rawRequest,
@@ -113,6 +114,52 @@ describe("listInboxes", () => {
     await listInboxes({});
 
     expect(ecfsGetMock).toHaveBeenCalledWith("/inbox");
+  });
+});
+
+describe("getDownloadPlan", () => {
+  beforeEach(() => ecfsGetMock.mockReset());
+
+  it("requests a download plan with the same filters as searchFilings, no limit/offset", async () => {
+    ecfsGetMock.mockResolvedValue({ filings: [], aggregations: { download_plan: {} } });
+
+    await getDownloadPlan({
+      q: "internet",
+      proceedings_name: "17-108",
+      filers_name: "Jane Doe",
+      submissiontype_description: "COMMENT",
+      date_received_since: "2018-01-01",
+      date_received_until: "2018-02-01",
+      sort: "date_disseminated,DESC",
+    });
+
+    expect(ecfsGetMock).toHaveBeenCalledWith("/filings", {
+      q: "internet",
+      "proceedings.name": "17-108",
+      "filers.name": "Jane Doe",
+      "submissiontype.description": "COMMENT",
+      "date_received[since]": "2018-01-01",
+      "date_received[until]": "2018-02-01",
+      sort: "date_disseminated,DESC",
+      type: "downloadplan",
+    });
+  });
+
+  it("passes through undefined for omitted optional filters", async () => {
+    ecfsGetMock.mockResolvedValue({ filings: [], aggregations: { download_plan: {} } });
+
+    await getDownloadPlan({});
+
+    expect(ecfsGetMock).toHaveBeenCalledWith("/filings", {
+      q: undefined,
+      "proceedings.name": undefined,
+      "filers.name": undefined,
+      "submissiontype.description": undefined,
+      "date_received[since]": undefined,
+      "date_received[until]": undefined,
+      sort: undefined,
+      type: "downloadplan",
+    });
   });
 });
 
