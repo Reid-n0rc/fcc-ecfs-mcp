@@ -47,6 +47,18 @@ specific filing, and issue raw requests against endpoints not otherwise covered.
 Prefer sourcing `ECFS_API_KEY` from your OS keychain or a secrets manager (e.g. 1Password,
 `gpg`-encrypted dotfiles) rather than pasting it into a config file where possible.
 
+## Slash commands
+
+`.claude/commands/` ships project-scoped Claude Code slash commands that wrap the
+tools above (auto-discovered by Claude Code — no separate registration step needed):
+
+| Command | Description |
+| --- | --- |
+| `/fcc-ecfs <query>` | General dispatcher — picks the right ECFS tool for the request. |
+| `/fcc-search-filings <args>` | Search filings by docket, filer, type, date, or text. |
+| `/fcc-search-proceedings <docket>` | Look up a proceeding/docket by number or name. |
+| `/fcc-get-filing <submission id>` | Fetch a single filing by its submission ID. |
+
 ## Development
 
 ```bash
