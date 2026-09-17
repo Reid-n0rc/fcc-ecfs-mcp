@@ -59,7 +59,7 @@ export const getFilingSchema = z.object({
 export type GetFilingInput = z.infer<typeof getFilingSchema>;
 
 export async function getFiling(input: GetFilingInput) {
-  return ecfsGet(`/filings/${encodeURIComponent(input.id_submission)}`);
+  return ecfsGet(`/filing/${encodeURIComponent(input.id_submission)}`);
 }
 
 export const searchProceedingsSchema = z.object({
@@ -85,6 +85,27 @@ export async function searchProceedings(input: SearchProceedingsInput) {
     offset: input.offset,
   };
   return ecfsGet("/proceedings", params);
+}
+
+export const searchDocumentsSchema = z.object({
+  id_submission: z
+    .string()
+    .min(1)
+    .describe(
+      "Submission ID(s) of the filing(s) to list documents for. Comma-separate multiple IDs.",
+    ),
+});
+export type SearchDocumentsInput = z.infer<typeof searchDocumentsSchema>;
+
+export async function searchDocuments(input: SearchDocumentsInput) {
+  return ecfsGet("/documents", { id_submission: input.id_submission });
+}
+
+export const listInboxesSchema = z.object({});
+export type ListInboxesInput = z.infer<typeof listInboxesSchema>;
+
+export async function listInboxes(_input: ListInboxesInput) {
+  return ecfsGet("/inbox");
 }
 
 export const rawRequestSchema = z.object({

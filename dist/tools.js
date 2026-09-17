@@ -53,7 +53,7 @@ export const getFilingSchema = z.object({
     id_submission: z.string().min(1).describe("The ECFS submission ID of the filing to fetch."),
 });
 export async function getFiling(input) {
-    return ecfsGet(`/filings/${encodeURIComponent(input.id_submission)}`);
+    return ecfsGet(`/filing/${encodeURIComponent(input.id_submission)}`);
 }
 export const searchProceedingsSchema = z.object({
     name: z
@@ -76,6 +76,19 @@ export async function searchProceedings(input) {
         offset: input.offset,
     };
     return ecfsGet("/proceedings", params);
+}
+export const searchDocumentsSchema = z.object({
+    id_submission: z
+        .string()
+        .min(1)
+        .describe("Submission ID(s) of the filing(s) to list documents for. Comma-separate multiple IDs."),
+});
+export async function searchDocuments(input) {
+    return ecfsGet("/documents", { id_submission: input.id_submission });
+}
+export const listInboxesSchema = z.object({});
+export async function listInboxes(_input) {
+    return ecfsGet("/inbox");
 }
 export const rawRequestSchema = z.object({
     path: z

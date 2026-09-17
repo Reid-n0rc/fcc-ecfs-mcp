@@ -1,18 +1,22 @@
 # fcc-ecfs-mcp
 
 An [MCP](https://modelcontextprotocol.io) server for the FCC's [Electronic Comment
-Filing System (ECFS) public API](https://www.fcc.gov/ecfs/help/public_api). Lets an
-MCP client (Claude Desktop, Claude Code, etc.) search filings and proceedings, fetch a
-specific filing, and issue raw requests against endpoints not otherwise covered.
+Filing System (ECFS) public API](https://www.fcc.gov/ecfs/help/public_api). Implements
+every endpoint in ECFS's public OpenAPI spec — filings, a single filing, proceedings,
+a filing's documents, and non-docketed filing inboxes — plus an escape hatch for
+anything else. Lets an MCP client (Claude Desktop, Claude Code, etc.) search and fetch
+across all of them.
 
 ## Tools
 
-| Tool | Description |
-| --- | --- |
-| `ecfs_search_filings` | Search filings by free text, proceeding/docket number, filer name, submission type, or date received. |
-| `ecfs_get_filing` | Fetch a single filing by its submission ID. |
-| `ecfs_search_proceedings` | Search proceedings (dockets), e.g. by docket number. |
-| `ecfs_raw_request` | Escape hatch: call any ECFS path/query params not covered above. `api_key` is added automatically. |
+| Tool | ECFS endpoint | Description |
+| --- | --- | --- |
+| `ecfs_search_filings` | `GET /filings` | Search filings by free text, proceeding/docket number, filer name, submission type, or date received. |
+| `ecfs_get_filing` | `GET /filing/{id}` | Fetch a single filing by its submission ID. |
+| `ecfs_search_proceedings` | `GET /proceedings` | Search proceedings (dockets), e.g. by docket number. |
+| `ecfs_search_documents` | `GET /documents` | List a filing's document/attachment metadata (filename, page count, byte size, OCR status) by submission ID. Does not return file contents — ECFS's public API is metadata-only; the actual PDF is served from the (bot-protected) ECFS website. |
+| `ecfs_list_inboxes` | `GET /inbox` | List the available inboxes for non-docketed filings. |
+| `ecfs_raw_request` | any | Escape hatch: call any ECFS path/query params not covered above. `api_key` is added automatically. |
 
 ## Setup
 
@@ -80,6 +84,7 @@ a plugin, they're namespaced under `fcc-ecfs`:
 | `/fcc-ecfs:fcc-search-filings <args>` | Search filings by docket, filer, type, date, or text. |
 | `/fcc-ecfs:fcc-search-proceedings <docket>` | Look up a proceeding/docket by number or name. |
 | `/fcc-ecfs:fcc-get-filing <submission id>` | Fetch a single filing by its submission ID. |
+| `/fcc-ecfs:fcc-list-documents <submission id(s)>` | List document/attachment metadata for one or more filings. |
 
 ## Development
 

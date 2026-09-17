@@ -8,6 +8,8 @@ Pick the right tool based on what's being asked:
 - A docket/proceeding number or name lookup → `ecfs_search_proceedings`
 - Filings by docket, filer name, submission type, date range, or free-text search → `ecfs_search_filings`
 - A specific filing by its submission ID → `ecfs_get_filing`
+- Documents/attachments for a filing by submission ID → `ecfs_search_documents`
+- Available non-docketed filing inboxes → `ecfs_list_inboxes`
 - Anything not covered by the above → `ecfs_raw_request`
 
 Summarize the results clearly rather than dumping raw JSON.

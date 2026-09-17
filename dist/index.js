@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { getFiling, getFilingSchema, rawRequest, rawRequestSchema, searchFilings, searchFilingsSchema, searchProceedings, searchProceedingsSchema, } from "./tools.js";
+import { getFiling, getFilingSchema, listInboxes, listInboxesSchema, rawRequest, rawRequestSchema, searchDocuments, searchDocumentsSchema, searchFilings, searchFilingsSchema, searchProceedings, searchProceedingsSchema, } from "./tools.js";
 // Load .env from the project root regardless of the process's cwd, so the
 // server works whether launched via `npm run dev` or as an absolute-path
 // MCP server command from a client config. Real environment variables
@@ -12,7 +12,7 @@ const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
 loadDotenv({ path: path.join(projectRoot, ".env") });
 const server = new McpServer({
     name: "fcc-ecfs-mcp",
-    version: "0.1.0",
+    version: "0.2.0",
 });
 function toToolResult(data) {
     return {
@@ -63,6 +63,32 @@ server.registerTool("ecfs_search_proceedings", {
 }, async (input) => {
     try {
         return toToolResult(await searchProceedings(input));
+    }
+    catch (error) {
+        return toErrorResult(error);
+    }
+});
+server.registerTool("ecfs_search_documents", {
+    title: "List documents for an ECFS filing",
+    description: "List the documents (attachments) associated with one or more ECFS filings, by " +
+        "submission ID. Returns document metadata (filename, page count, byte size, OCR " +
+        "status, and its viewer location) — not the document's file contents.",
+    inputSchema: searchDocumentsSchema.shape,
+}, async (input) => {
+    try {
+        return toToolResult(await searchDocuments(input));
+    }
+    catch (error) {
+        return toErrorResult(error);
+    }
+});
+server.registerTool("ecfs_list_inboxes", {
+    title: "List ECFS non-docketed filing inboxes",
+    description: "List the available inboxes for non-docketed filings in ECFS.",
+    inputSchema: listInboxesSchema.shape,
+}, async (input) => {
+    try {
+        return toToolResult(await listInboxes(input));
     }
     catch (error) {
         return toErrorResult(error);

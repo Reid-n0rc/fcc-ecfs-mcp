@@ -9,7 +9,14 @@ vi.mock("../src/ecfsClient.js", async () => {
   return { ...actual, ecfsGet: ecfsGetMock };
 });
 
-import { getFiling, rawRequest, searchFilings, searchProceedings } from "../src/tools.js";
+import {
+  getFiling,
+  listInboxes,
+  rawRequest,
+  searchDocuments,
+  searchFilings,
+  searchProceedings,
+} from "../src/tools.js";
 
 describe("searchFilings", () => {
   beforeEach(() => ecfsGetMock.mockReset());
@@ -69,7 +76,43 @@ describe("getFiling", () => {
 
     await getFiling({ id_submission: "abc 123" });
 
-    expect(ecfsGetMock).toHaveBeenCalledWith("/filings/abc%20123");
+    expect(ecfsGetMock).toHaveBeenCalledWith("/filing/abc%20123");
+  });
+});
+
+describe("searchDocuments", () => {
+  beforeEach(() => ecfsGetMock.mockReset());
+
+  it("requests documents by submission ID", async () => {
+    ecfsGetMock.mockResolvedValue([]);
+
+    await searchDocuments({ id_submission: "6016165687" });
+
+    expect(ecfsGetMock).toHaveBeenCalledWith("/documents", {
+      id_submission: "6016165687",
+    });
+  });
+
+  it("passes through comma-separated IDs verbatim", async () => {
+    ecfsGetMock.mockResolvedValue([]);
+
+    await searchDocuments({ id_submission: "6016165687,6017788670" });
+
+    expect(ecfsGetMock).toHaveBeenCalledWith("/documents", {
+      id_submission: "6016165687,6017788670",
+    });
+  });
+});
+
+describe("listInboxes", () => {
+  beforeEach(() => ecfsGetMock.mockReset());
+
+  it("requests the inbox list with no params", async () => {
+    ecfsGetMock.mockResolvedValue([]);
+
+    await listInboxes({});
+
+    expect(ecfsGetMock).toHaveBeenCalledWith("/inbox");
   });
 });
 
