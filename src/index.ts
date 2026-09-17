@@ -1,4 +1,6 @@
-import "dotenv/config";
+import { config as loadDotenv } from "dotenv";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -11,6 +13,13 @@ import {
   searchProceedings,
   searchProceedingsSchema,
 } from "./tools.js";
+
+// Load .env from the project root regardless of the process's cwd, so the
+// server works whether launched via `npm run dev` or as an absolute-path
+// MCP server command from a client config. Real environment variables
+// (e.g. set by the MCP client) always take precedence.
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+loadDotenv({ path: path.join(projectRoot, ".env") });
 
 const server = new McpServer({
   name: "fcc-ecfs-mcp",
