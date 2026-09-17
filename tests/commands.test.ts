@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const commandsDir = path.join(projectRoot, ".claude", "commands");
+const commandsDir = path.join(projectRoot, "commands");
 
 const KNOWN_TOOLS = [
   "ecfs_search_filings",
