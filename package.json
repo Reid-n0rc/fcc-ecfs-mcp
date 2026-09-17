@@ -1,0 +1,33 @@
+{
+  "name": "fcc-ecfs-mcp",
+  "version": "0.1.0",
+  "description": "MCP server exposing the FCC ECFS (Electronic Comment Filing System) public API",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "fcc-ecfs-mcp": "dist/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "dotenv": "^16.4.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^5.0.1"
+  }
+}
