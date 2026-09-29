@@ -93,8 +93,15 @@ a plugin, they're namespaced under `fcc-ecfs`:
 ```bash
 npm run dev        # run the server directly with tsx
 npm test           # run the unit test suite (vitest)
+npm run test:live  # run live tests against the real ECFS API (needs ECFS_API_KEY)
 npm run typecheck  # type-check without emitting
 ```
+
+CI (`.github/workflows/ci.yml`) runs the unit tests and the live tests on every push to
+`main` and every PR, plus weekly and on manual dispatch; docs-only changes skip CI. Live
+tests use the `ECFS_API_KEY` secret (`gh secret set ECFS_API_KEY`, and again with
+`--app dependabot` for Dependabot PRs). Fork PRs can't read secrets, so they skip the
+live tests.
 
 To test the plugin locally before publishing a change, rebuild and point Claude Code at
 the working tree:
@@ -142,6 +149,8 @@ possible and ECFS's underlying content is public. If you need a document's actua
   key value before being returned — some ECFS response types (e.g. `type=downloadplan`)
   echo the key back verbatim in generated URLs, so URL-only redaction isn't sufficient.
 - `.env` is git-ignored; only `.env.example` (no real key) is committed.
+
+To report a vulnerability, see [SECURITY.md](SECURITY.md).
 
 ## License
 
