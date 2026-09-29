@@ -27,6 +27,8 @@ jobs:
           EVENT: ${{ github.event_name }}
           PR_BASE: ${{ github.event.pull_request.base.sha }}
           PUSH_BEFORE: ${{ github.event.before }}
+          # Docs and GitHub community files (issue/PR templates, CODEOWNERS) that no test exercises.
+          DOCS: '(\.md$|^LICENSE$|^docs/|^\.github/ISSUE_TEMPLATE/|^\.github/CODEOWNERS$)'
         run: |
           case "$EVENT" in
             pull_request) base="$PR_BASE" ;;
@@ -35,7 +37,7 @@ jobs:
           esac
           if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
             code=true
-          elif git diff --name-only "$base" HEAD | grep -qvE '(\.md$|^LICENSE$|^docs/)'; then
+          elif git diff --name-only "$base" HEAD | grep -qvE "$DOCS"; then
             code=true
           else
             code=false
