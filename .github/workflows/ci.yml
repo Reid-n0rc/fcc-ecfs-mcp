@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: # docs-only changes skip CI
+      - "**.md"
+      - "LICENSE"
+      - "docs/**"
+  pull_request:
+    paths-ignore:
+      - "**.md"
+      - "LICENSE"
+      - "docs/**"
+  schedule:
+    - cron: "17 13 * * 1" # Mondays 13:17 UTC — catches ECFS API drift
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [22, 24] # vitest requires Node >=22.12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  live:
+    # Secrets aren't available to fork PRs, so those skip the live job. Same-repo PRs
+    # (including Dependabot, which reads its own Dependabot-scoped ECFS_API_KEY) run it.
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    needs: test
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ecfs-live
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:live
+        env:
+          ECFS_API_KEY: ${{ secrets.ECFS_API_KEY }}
