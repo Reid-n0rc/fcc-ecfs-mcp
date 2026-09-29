@@ -155,7 +155,7 @@ export const rawRequestSchema = z.object({
       "ECFS API path to call, relative to https://publicapi.fcc.gov/ecfs (e.g. '/filings', '/filings/{id}', '/proceedings'). Use this for endpoints or parameters not covered by the other tools.",
     ),
   params: z
-    .record(z.union([z.string(), z.number(), z.boolean()]))
+    .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
     .optional()
     .describe("Query parameters to send, excluding api_key (added automatically)."),
 });

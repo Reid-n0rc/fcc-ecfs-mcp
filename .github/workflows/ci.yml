@@ -3,15 +3,7 @@ name: CI
 on:
   push:
     branches: [main]
-    paths-ignore: # docs-only changes skip CI
-      - "**.md"
-      - "LICENSE"
-      - "docs/**"
   pull_request:
-    paths-ignore:
-      - "**.md"
-      - "LICENSE"
-      - "docs/**"
   schedule:
     - cron: "17 13 * * 1" # Mondays 13:17 UTC — catches ECFS API drift
   workflow_dispatch:
@@ -20,7 +12,39 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    # Docs-only changes skip the test jobs. Done here rather than with `paths-ignore` so
+    # the required `ci-ok` check still reports (and passes) on docs-only PRs.
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: filter
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          case "$EVENT" in
+            pull_request) base="$PR_BASE" ;;
+            push) base="$PUSH_BEFORE" ;;
+            *) base="" ;; # schedule / manual dispatch: always test
+          esac
+          if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            code=true
+          elif git diff --name-only "$base" HEAD | grep -qvE '(\.md$|^LICENSE$|^docs/)'; then
+            code=true
+          else
+            code=false
+          fi
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
   test:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -39,13 +63,14 @@ jobs:
   live:
     # Secrets aren't available to fork PRs, so those skip the live job. Same-repo PRs
     # (including Dependabot, which reads its own Dependabot-scoped ECFS_API_KEY) run it.
+    needs: test
     if: >-
       github.event_name != 'pull_request' ||
       github.event.pull_request.head.repo.full_name == github.repository
-    needs: test
     runs-on: ubuntu-latest
     concurrency:
-      group: ecfs-live
+      # Per-ref so parallel PRs don't cancel each other's pending live runs.
+      group: ecfs-live-${{ github.ref }}
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
@@ -57,3 +82,18 @@ jobs:
       - run: npm run test:live
         env:
           ECFS_API_KEY: ${{ secrets.ECFS_API_KEY }}
+
+  ci-ok:
+    # The single required status check. Passes when every job succeeded or was
+    # intentionally skipped; fails on any failure or cancellation.
+    if: always()
+    needs: [changes, test, live]
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Job results: $RESULTS"
+          for r in $RESULTS; do
+            case "$r" in success|skipped) ;; *) exit 1 ;; esac
+          done

@@ -98,10 +98,13 @@ npm run typecheck  # type-check without emitting
 ```
 
 CI (`.github/workflows/ci.yml`) runs the unit tests and the live tests on every push to
-`main` and every PR, plus weekly and on manual dispatch; docs-only changes skip CI. Live
-tests use the `ECFS_API_KEY` secret (`gh secret set ECFS_API_KEY`, and again with
-`--app dependabot` for Dependabot PRs). Fork PRs can't read secrets, so they skip the
+`main` and every PR, plus weekly and on manual dispatch; docs-only changes skip the test
+jobs. Live tests use the `ECFS_API_KEY` secret (`gh secret set ECFS_API_KEY`, and again
+with `--app dependabot` for Dependabot PRs). Fork PRs can't read secrets, so they skip the
 live tests.
+
+Changes to `main` go through a pull request that needs an approving review from the
+repo owner (`.github/CODEOWNERS`) and a passing `ci-ok` check, which rolls up every CI job.
 
 To test the plugin locally before publishing a change, rebuild and point Claude Code at
 the working tree:
