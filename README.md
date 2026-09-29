@@ -15,7 +15,8 @@ across all of them.
 | `ecfs_get_filing` | `GET /filing/{id}` | Fetch a single filing by its submission ID. |
 | `ecfs_search_proceedings` | `GET /proceedings` | Search proceedings (dockets), e.g. by docket number. |
 | `ecfs_get_download_plan` | `GET /filings?type=downloadplan` | Get date-bucketed queries safe for exhaustively paging a large docket (e.g. a heavily-commented NPRM) — plain offset/limit paging over a big result set can return duplicate or missing filings. |
-| `ecfs_search_documents` | `GET /documents` | List a filing's document/attachment metadata (filename, page count, byte size, OCR status) by submission ID. Does not return file contents — ECFS's public API is metadata-only; the actual PDF is served from the (bot-protected) ECFS website. |
+| `ecfs_search_documents` | `GET /documents` | List a filing's document/attachment metadata (filename, page count, byte size, OCR status) by submission ID. Does not return file contents — ECFS's public API is metadata-only. |
+| `ecfs_download_document` | ECFS website (headless Chrome) | Download a filing's document (PDF) and save it to disk; returns the saved path, size, and SHA-256. See [Downloading documents](#downloading-documents). |
 | `ecfs_list_inboxes` | `GET /inbox` | List the available inboxes for non-docketed filings. |
 | `ecfs_raw_request` | any | Escape hatch: call any ECFS path/query params not covered above. `api_key` is added automatically. |
 
@@ -35,8 +36,10 @@ no `cd`-ing into this repo first).
    ```
 
    Claude Code will prompt for your FCC ECFS API key (stored securely, not pasted into
-   a config file) and register both the `fcc-ecfs` MCP server and the `/fcc-ecfs:*`
-   slash commands automatically.
+   a config file) and an optional download folder for `ecfs_download_document`
+   (default `~/Downloads/ecfs`), and register both the `fcc-ecfs` MCP server and the
+   `/fcc-ecfs:*` slash commands automatically.
+3. To download documents, have [Google Chrome](https://www.google.com/chrome/) installed.
 
 ### Option B: Manual MCP server config
 
@@ -63,7 +66,8 @@ server yourself:
          "command": "node",
          "args": ["/absolute/path/to/fcc-ecfs-mcp/dist/index.js"],
          "env": {
-           "ECFS_API_KEY": "your-api-key-here"
+           "ECFS_API_KEY": "your-api-key-here",
+           "ECFS_DOWNLOAD_DIR": "~/Downloads/ecfs"
          }
        }
      }
@@ -72,7 +76,7 @@ server yourself:
 
    Prefer sourcing `ECFS_API_KEY` from your OS keychain or a secrets manager (e.g.
    1Password, `gpg`-encrypted dotfiles) rather than pasting it into a config file
-   where possible.
+   where possible. `ECFS_DOWNLOAD_DIR` is optional (default `~/Downloads/ecfs`).
 
 ## Slash commands
 
@@ -87,6 +91,7 @@ a plugin, they're namespaced under `fcc-ecfs`:
 | `/fcc-ecfs:fcc-get-filing <submission id>` | Fetch a single filing by its submission ID. |
 | `/fcc-ecfs:fcc-list-documents <submission id(s)>` | List document/attachment metadata for one or more filings. |
 | `/fcc-ecfs:fcc-download-plan <args>` | Get a download plan for exhaustively paging a large docket. |
+| `/fcc-ecfs:fcc-download-document <id, URL, or description>` | Download a filing's document (PDF) to the download folder. |
 
 ## Development
 
@@ -94,6 +99,7 @@ a plugin, they're namespaced under `fcc-ecfs`:
 npm run dev        # run the server directly with tsx
 npm test           # run the unit test suite (vitest)
 npm run test:live  # run live tests against the real ECFS API (needs ECFS_API_KEY)
+npm run test:download  # download a real document via headless Chrome (local only)
 npm run typecheck  # type-check without emitting
 ```
 
@@ -118,31 +124,25 @@ claude --plugin-dir .
 Note that the plugin loader never runs `npm run build` on install — it only runs
 `npm ci` to fetch dependencies. `dist/` must be committed and up to date before pushing.
 
-## Known limitation: document/PDF content isn't fetchable
+## Downloading documents
 
-The ECFS public API (this server's only data source) is **metadata-only**. No endpoint
-returns a document's file bytes or extracted text — not `/filings`, not `/filing/{id}`,
-and not `/documents` (see `ecfs_search_documents`'s `Document` schema: it has fields like
-`file_name`, `page_count`, `byte_size`, `ocr_flag`, and a `location` URL, but no text/content
-field).
+The ECFS public API is **metadata-only**: no endpoint returns a document's file bytes or
+text. A document's `location` (or a filing's `documents[].src`) points at
+`https://www.fcc.gov/ecfs/document/{id_submission}/{n}` on the ECFS *website*, which
+refuses non-browser HTTP clients such as `curl` with `403 Forbidden`.
 
-That `location` field (and the `documents[].src` field on a `Filing`) points at
-`https://www.fcc.gov/ecfs/document/{id_submission}/{n}` — the ECFS *website*, a separate
-system from the public API, sitting behind Akamai bot protection. Direct HTTP requests to
-it — via `curl`, this server, or any other non-browser HTTP client — return `403
-Forbidden` regardless of headers (user-agent, `Referer`, `Accept-Language`, etc. make no
-difference; the block operates below the HTTP layer, on the TLS/network fingerprint).
+`ecfs_download_document` therefore opens that page in headless Google Chrome (via
+`playwright-core`, using your installed Chrome — no bundled browser download) and saves
+the PDF the page loads. Headless Chrome is presented under its regular Chrome user agent,
+since the site refuses the default `HeadlessChrome` one. No window is shown.
 
-This project will not attempt to work around that protection — not via TLS-fingerprint
-impersonation, proxying, or other anti-bot-evasion tooling, even though it's technically
-possible and ECFS's underlying content is public. If you need a document's actual text:
-
-- Open the `location`/`src` URL in a real browser (a human doing this is exactly the
-  traffic Akamai lets through).
-- Automate a real, visible browser session (e.g. Claude Code's Chrome extension) rather
-  than a bare HTTP client — the request then carries a browser's genuine fingerprint
-  instead of one constructed to fake it.
-- Download the PDF yourself and read/summarize it locally.
+- Files are saved to `ECFS_DOWNLOAD_DIR` (plugin setting "Download folder"; default
+  `~/Downloads/ecfs`), named `{id_submission}_{ECFS filename}`. The model can pass
+  `output_dir` when you ask for a specific location.
+- Re-downloading an identical file reuses the existing copy; a different file with the
+  same name gets a numeric suffix rather than overwriting.
+- Each download takes a few seconds. The tool fetches one document per call; it isn't
+  meant for bulk-downloading whole dockets.
 
 ## Security notes
 

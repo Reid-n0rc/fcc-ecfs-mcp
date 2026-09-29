@@ -2,7 +2,7 @@
   "name": "fcc-ecfs",
   "displayName": "FCC ECFS Tools",
   "description": "MCP server and slash commands for the FCC's Electronic Comment Filing System (ECFS) public API",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "author": {
     "name": "Reid Crowe"
   },
@@ -12,7 +12,8 @@
       "command": "node",
       "args": ["${CLAUDE_PLUGIN_ROOT}/dist/index.js"],
       "env": {
-        "ECFS_API_KEY": "${user_config.ecfs_api_key}"
+        "ECFS_API_KEY": "${user_config.ecfs_api_key}",
+        "ECFS_DOWNLOAD_DIR": "${user_config.download_dir}"
       }
     }
   },
@@ -23,6 +24,13 @@
       "description": "Free API key from https://www.fcc.gov/ecfs/help/public_api",
       "sensitive": true,
       "required": true
+    },
+    "download_dir": {
+      "type": "string",
+      "title": "Download folder",
+      "description": "Where ecfs_download_document saves files. Defaults to ~/Downloads/ecfs.",
+      "default": "~/Downloads/ecfs",
+      "required": false
     }
   }
 }

@@ -69,6 +69,44 @@ describe("searchFilings", () => {
   });
 });
 
+describe("searchFilings filer-name fallback", () => {
+  beforeEach(() => ecfsGetMock.mockReset());
+
+  it("retries a filers_name with no exact match as free text, with a note", async () => {
+    ecfsGetMock
+      .mockResolvedValueOnce({ filing: [] })
+      .mockResolvedValueOnce({ filing: [{ id_submission: "6015544108" }] });
+
+    const res: any = await searchFilings({ proceedings_name: "09-209", filers_name: "ARRL" });
+
+    expect(ecfsGetMock).toHaveBeenCalledTimes(2);
+    expect(ecfsGetMock.mock.calls[1][1]).toMatchObject({
+      q: "ARRL",
+      "proceedings.name": "09-209",
+      "filers.name": undefined,
+    });
+    expect(res.filing).toHaveLength(1);
+    expect(res.note).toContain('"ARRL"');
+  });
+
+  it("keeps an existing q when retrying", async () => {
+    ecfsGetMock.mockResolvedValue({ filing: [] });
+
+    await searchFilings({ q: "vanity", filers_name: "ARRL" });
+
+    expect(ecfsGetMock.mock.calls[1][1]).toMatchObject({ q: "vanity ARRL" });
+  });
+
+  it("doesn't retry when the exact filer name matches", async () => {
+    ecfsGetMock.mockResolvedValue({ filing: [{ id_submission: "1" }] });
+
+    const res: any = await searchFilings({ filers_name: "Jane Doe" });
+
+    expect(ecfsGetMock).toHaveBeenCalledTimes(1);
+    expect(res.note).toBeUndefined();
+  });
+});
+
 describe("getFiling", () => {
   beforeEach(() => ecfsGetMock.mockReset());
 

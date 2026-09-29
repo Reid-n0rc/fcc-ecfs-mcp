@@ -19,6 +19,7 @@ import {
   searchProceedings,
   searchProceedingsSchema,
 } from "./tools.js";
+import { downloadDocument, downloadDocumentSchema } from "./download.js";
 
 // Load .env from the project root regardless of the process's cwd, so the
 // server works whether launched via `npm run dev` or as an absolute-path
@@ -29,7 +30,7 @@ loadDotenv({ path: path.join(projectRoot, ".env") });
 
 const server = new McpServer({
   name: "fcc-ecfs-mcp",
-  version: "0.3.0",
+  version: "0.4.0",
 });
 
 function toToolResult(data: unknown) {
@@ -131,12 +132,35 @@ server.registerTool(
     description:
       "List the documents (attachments) associated with one or more ECFS filings, by " +
       "submission ID. Returns document metadata (filename, page count, byte size, OCR " +
-      "status, and its viewer location) — not the document's file contents.",
+      "status, and its viewer location) — not the document's file contents. Use " +
+      "ecfs_download_document to save a document's PDF.",
     inputSchema: searchDocumentsSchema.shape,
   },
   async (input) => {
     try {
       return toToolResult(await searchDocuments(input));
+    } catch (error) {
+      return toErrorResult(error);
+    }
+  },
+);
+
+server.registerTool(
+  "ecfs_download_document",
+  {
+    title: "Download an ECFS document",
+    description:
+      "Download one document (usually a PDF) from an ECFS filing and save it to disk, " +
+      "returning the saved file path. Identify it by the filing's submission ID and the " +
+      "document's position in the filing — the {n} in its " +
+      "https://www.fcc.gov/ecfs/document/{id_submission}/{n} location/src URL. Fetches the " +
+      "file through a headless Chrome browser (Google Chrome must be installed), so it takes " +
+      "a few seconds per document.",
+    inputSchema: downloadDocumentSchema.shape,
+  },
+  async (input) => {
+    try {
+      return toToolResult(await downloadDocument(input));
     } catch (error) {
       return toErrorResult(error);
     }

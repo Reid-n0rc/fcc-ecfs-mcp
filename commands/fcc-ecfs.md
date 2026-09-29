@@ -10,6 +10,7 @@ Pick the right tool based on what's being asked:
 - A specific filing by its submission ID → `ecfs_get_filing`
 - A large/heavily-commented docket where you need every filing (not just a page) → `ecfs_get_download_plan` first, then run its suggested queries via `ecfs_search_filings`
 - Documents/attachments for a filing by submission ID → `ecfs_search_documents`
+- Downloading a document's file (PDF) → `ecfs_download_document`
 - Available non-docketed filing inboxes → `ecfs_list_inboxes`
 - Anything not covered by the above → `ecfs_raw_request`
 
