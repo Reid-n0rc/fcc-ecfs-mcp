@@ -105,6 +105,7 @@ live tests.
 
 Changes to `main` go through a pull request that needs an approving review from the
 repo owner (`.github/CODEOWNERS`) and a passing `ci-ok` check, which rolls up every CI job.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow.
 
 To test the plugin locally before publishing a change, rebuild and point Claude Code at
 the working tree:

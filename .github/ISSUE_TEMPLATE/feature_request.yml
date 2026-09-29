@@ -1,0 +1,25 @@
+name: Feature request
+description: Suggest a new tool, filter, or improvement.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: The task or question you want to answer with ECFS data, and what's missing today.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How you'd like it to work, e.g. a new tool, a new parameter, or an example prompt.
+  - type: textarea
+    id: api
+    attributes:
+      label: ECFS API details
+      description: The ECFS API endpoint or parameters involved, if you know them.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

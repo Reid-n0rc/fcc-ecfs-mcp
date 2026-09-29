@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/Reid-n0rc/fcc-ecfs-mcp/security/advisories/new
+    about: Please report security issues privately, not as a public issue. See SECURITY.md.
+  - name: ECFS service or data problems
+    url: https://www.fcc.gov/ecfs/help
+    about: Problems with the FCC's ECFS service itself (outages, wrong data, account issues) go to the FCC.
