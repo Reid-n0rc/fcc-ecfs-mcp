@@ -55,9 +55,6 @@ claude --plugin-dir .
   `process.env.ECFS_API_KEY`. Never accept it as a tool input, and make sure it can't
   appear in tool output, errors, or logs. The live tests fail if the key shows up in a
   response.
-- **Don't work around ECFS's bot protection.** Document downloads from the ECFS website
-  sit behind Akamai. This project won't use fingerprint spoofing, proxies, or other
-  anti-bot evasion; see the README's "Known limitation" section.
 - **Match the existing style.** Tool input schemas use zod with a `.describe()` on every
   field, since those descriptions are what the model sees.
 

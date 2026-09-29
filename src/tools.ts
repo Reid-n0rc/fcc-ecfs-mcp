@@ -10,7 +10,14 @@ export const searchFilingsSchema = z.object({
     .string()
     .optional()
     .describe("Docket / proceeding number to filter by, e.g. '17-108'."),
-  filers_name: z.string().optional().describe("Filter by the filer's/commenter's name."),
+  filers_name: z
+    .string()
+    .optional()
+    .describe(
+      "Filter by the filer's name. ECFS matches the full registered name exactly (e.g. " +
+        "'ARRL, the national association for Amateur Radio', not 'ARRL'); if nothing matches, " +
+        "the search is retried as free text and the result carries a `note`.",
+    ),
   submissiontype_description: z
     .string()
     .optional()
@@ -59,12 +66,27 @@ function buildFilingFilterParams(input: {
 }
 
 export async function searchFilings(input: SearchFilingsInput) {
-  const params: QueryParams = {
+  const page = { limit: input.limit, offset: input.offset };
+  const result = await ecfsGet<{ filing?: unknown[] }>("/filings", {
     ...buildFilingFilterParams(input),
-    limit: input.limit,
-    offset: input.offset,
+    ...page,
+  });
+  if (!input.filers_name || (result?.filing?.length ?? 0) > 0) return result;
+
+  // filers.name only matches a filer's full registered name, so a short or
+  // informal name ("ARRL") finds nothing. Retry it as free text instead.
+  const q = [input.q, input.filers_name].filter(Boolean).join(" ");
+  const retry = await ecfsGet<{ filing?: unknown[] }>("/filings", {
+    ...buildFilingFilterParams({ ...input, filers_name: undefined, q }),
+    ...page,
+  });
+  return {
+    note:
+      `No filings have the exact filer name "${input.filers_name}", so these are free-text ` +
+      `matches for it instead. They can include filings that only mention "${input.filers_name}"; ` +
+      "check each filing's filers[].name, and use that exact name as filers_name to filter precisely.",
+    ...retry,
   };
-  return ecfsGet("/filings", params);
 }
 
 export const getDownloadPlanSchema = z.object({
