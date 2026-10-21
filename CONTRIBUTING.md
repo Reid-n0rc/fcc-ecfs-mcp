@@ -52,6 +52,41 @@ claude --plugin-dir .
    behavior changed.
 6. Open a pull request and fill in the template.
 
+### Claude Code Action (owner only)
+
+The owner can hand an approved issue to the
+[Claude Code Action](https://github.com/anthropics/claude-code-action)
+(`.github/workflows/claude.yml`), which implements it and opens the pull request as
+`claude[bot]`. Because the PR isn't authored by the owner, CODEOWNERS requests the
+owner's review and he can approve and merge it normally.
+
+- **Triggering it.** Only `Reid-n0rc` can. Assign the issue, make sure it has the
+  `software plan approved` label, then add the `agent-go` label. A comment containing
+  `@claude` on such an issue also starts a run. Labels or mentions from anyone else are
+  ignored, and only the owner's comments are passed to Claude.
+- **What it does.** It branches from `main` as `claude/issue-<n>-<slug>`, runs
+  `npm run typecheck`, `npm test`, `npm run test:coverage` and `npm run build`, commits
+  `dist/` if `src/` changed, and opens one PR into `main` whose body starts with
+  `Closes #<n>`. It never merges, approves, labels, tags or releases, and it can't edit
+  `.github/` (the Claude App has no `workflows` permission). It doesn't run the live
+  tests; CI does that on its PR.
+- **Reviewing its PR.** Review it like any other. To ask for changes, comment `@claude
+  <what to change>` on the PR or on a line of its diff; it pushes to the same branch,
+  CI reruns and any earlier approval is dismissed. When it's right, approve and merge.
+  `@claude` only works on PRs opened by `claude[bot]`, never on a person's PR.
+- **Stopping it.** Remove `agent-go` (a queued run re-checks the labels and stops), or
+  run `gh workflow disable claude.yml`. Close any unwanted `claude/*` PR.
+- **When to use a local session instead.** Changes to `.github/workflows/`, work that
+  needs the live ECFS API during development, or anything the owner wants to drive
+  interactively.
+
+The committed `.claude/settings.json` holds permission rules shared by the Action and
+local Claude Code sessions. It denies approving PRs, releases, force or tag pushes,
+pushes to `main`, writes through `gh api`, reading `.env`, and any Bash command that
+names the approval or `agent-go` labels. `gh pr merge` and `--admin` ask first. Personal
+rules go in `.claude/settings.local.json`, which is ignored; they can add to these rules
+but can't lift a deny.
+
 ## Guidelines
 
 - **Keep the API key out of everything.** The key is read only from
