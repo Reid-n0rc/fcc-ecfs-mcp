@@ -91,6 +91,19 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
       - run: npm run build
+      # Runs the packed bin directly (no `node` in front), the way npx and MCP clients do.
+      # Needs no API key: `initialize` never calls ECFS. One leg is enough; timeout is a backstop.
+      - name: Smoke-test the packed bin
+        if: matrix.node == 22
+        run: |
+          tmp="$RUNNER_TEMP/bin-smoke"
+          mkdir -p "$tmp"
+          tarball="$(npm pack --silent --pack-destination "$tmp")"
+          npm install --prefix "$tmp/app" --no-audit --no-fund "$tmp/$tarball"
+          init='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"smoke","version":"0"}}}'
+          out="$(printf '%s\n' "$init" | timeout 15 "$tmp/app/node_modules/.bin/fcc-ecfs-mcp")" || true
+          echo "$out"
+          grep -q '"serverInfo":{"name":"fcc-ecfs-mcp"' <<<"$out"
 
   live:
     # Secrets aren't available to fork PRs, so those skip the live job. Same-repo PRs

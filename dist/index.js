@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { config as loadDotenv } from "dotenv";
 import { realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
