@@ -214,9 +214,12 @@ export function envFilePath(moduleUrl: string = import.meta.url): string | undef
   return path.join(projectRoot, ".env");
 }
 
-/** CLI entrypoint: load .env (source checkouts only), then serve MCP over stdio. */
-export async function main(): Promise<void> {
-  const envFile = envFilePath();
+/**
+ * CLI entrypoint: load .env (source checkouts only), then serve MCP over stdio.
+ * `moduleUrl` is only for tests, to stand in for an installed copy's location.
+ */
+export async function main(moduleUrl: string = import.meta.url): Promise<void> {
+  const envFile = envFilePath(moduleUrl);
   if (envFile) {
     // Every option is explicit, because dotenv also reads DOTENV_* / DOTENV_CONFIG_*
     // from the environment: DOTENV_DEBUG would print to stdout (the MCP channel) and

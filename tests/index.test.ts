@@ -201,6 +201,16 @@ describe("main", () => {
     expect(transport.onmessage).toBeTypeOf("function");
     await transport.close();
   });
+
+  it("skips .env for an installed copy and still connects over stdio", async () => {
+    const installed = path.join("/tmp", "app", "node_modules", "fcc-ecfs-mcp", "dist", "index.js");
+
+    await main(pathToFileURL(installed).href);
+
+    expect(loadDotenvMock).not.toHaveBeenCalled();
+    expect(stdioTransports).toHaveLength(1);
+    await (stdioTransports[0] as { close(): Promise<void> }).close();
+  });
 });
 
 describe("envFilePath", () => {
