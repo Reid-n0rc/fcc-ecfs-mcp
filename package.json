@@ -7,6 +7,9 @@
   "bin": {
     "fcc-ecfs-mcp": "dist/index.js"
   },
+  "files": [
+    "dist/"
+  ],
   "engines": {
     "node": ">=18"
   },
