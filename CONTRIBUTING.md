@@ -36,6 +36,9 @@ claude --plugin-dir .
    - Unit tests live in `tests/` and run with `npm test`. They must not touch the network.
    - Live tests against the real ECFS API live in `tests/live/` and run with
      `npm run test:live`. Add or update one when you change how the server calls ECFS.
+   - `npm run test:coverage` runs the unit tests with coverage, writing
+     `coverage/lcov.info` and printing a text summary. The live suites (`test:live`,
+     `test:download`) aren't part of coverage.
 3. Run the checks locally:
    ```bash
    npm run typecheck
@@ -67,3 +70,7 @@ Every pull request needs:
 - an approving review from the repository owner (see `.github/CODEOWNERS`).
 
 The maintainer may run the live tests on a fork PR's changes before merging.
+
+Codecov also comments on each pull request with its coverage change and posts
+`codecov/project` and `codecov/patch` statuses. These are informational and don't block
+merging; `ci-ok` is the required check.
