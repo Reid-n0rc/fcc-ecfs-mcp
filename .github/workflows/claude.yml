@@ -7,7 +7,8 @@
 #   same-repo pull requests (opened by claude[bot]).
 # Anyone else's label or mention is ignored. No pull_request_target, and fork
 # PRs are refused. A first step re-reads the issue or PR, so the conditions
-# must still hold when the job starts.
+# must still hold when the job starts, and checks in the issue's events that
+# the owner was the last to apply each required label.
 #
 # issues / issue_comment workflows run from the default branch (main), so
 # changes to this file take effect only once merged.
@@ -89,7 +90,8 @@ jobs:
       id-token: write
     steps:
       # Event payloads are a snapshot from trigger time. Re-read the issue or
-      # PR now, so removing a label (or closing it) stops a queued run.
+      # PR now, so removing a label (or closing it) stops a queued run. Runs
+      # with the read-only GITHUB_TOKEN, before Claude starts.
       - name: Re-check the trigger at run time
         env:
           GH_TOKEN: ${{ github.token }}
@@ -117,6 +119,24 @@ jobs:
           if [ "$ok" != "true" ]; then
             echo "::error::#$NUMBER is no longer $what. Not running the Claude agent."
             exit 1
+          fi
+          # Server-side approval check: the most recent `labeled` event for each
+          # required label must have been performed by the owner, so a label
+          # applied (or re-applied) by anyone else doesn't count. The events
+          # API is paginated; --paginate prints one array per page, which
+          # `jq -s add` joins before taking the last match. No match fails closed.
+          if [ "$IS_PR" != "true" ]; then
+            gh api --paginate "repos/$REPO/issues/$NUMBER/events?per_page=100" > "$RUNNER_TEMP/issue-events.json"
+            for label in $(jq -r '.[] | @base64' <<<"$need"); do
+              label="$(base64 -d <<<"$label")"
+              actor="$(jq -s -r --arg l "$label" \
+                'add | [.[] | select(.event == "labeled" and .label.name == $l)] | last | .actor.login // ""' \
+                "$RUNNER_TEMP/issue-events.json")"
+              if [ "$actor" != "Reid-n0rc" ]; then
+                echo "::error::#$NUMBER: label '$label' was last applied by '${actor:-nobody}', not Reid-n0rc. Not running the Claude agent."
+                exit 1
+              fi
+            done
           fi
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

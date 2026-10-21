@@ -88,7 +88,7 @@ gate or rewrite history: Bash commands naming the `software plan approved` or `a
 labels, `gh label`, force pushes, tag pushes, pushes to `main`, `gh pr review`,
 `gh release`, `gh secret`, `gh auth token` and reading `.env`. Sensitive operations that
 local sessions sometimes need ask first: `gh pr merge` (including `--admin`),
-`gh issue edit`, `gh api` writes, GraphQL and `gh alias`. Do label changes yourself in a
+`gh issue edit`, `gh pr edit`, any `gh api` call, GraphQL and `gh alias`. Do label changes yourself in a
 terminal. These rules are defence in depth, not a security boundary. The real controls are the workflow's own
 tool lists, the Claude App's limited permissions and the `main` rulesets. Personal rules
 go in `.claude/settings.local.json`, which is ignored; they can add to these rules but
