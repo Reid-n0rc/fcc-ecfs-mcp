@@ -15,3 +15,7 @@ comment:
 ignore:
   - "tests/**"
   - "dist/**"
+flag_management:
+  individual_flags:
+    - name: unit
+      carryforward: false

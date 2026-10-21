@@ -62,7 +62,12 @@ jobs:
       # Coverage on one leg only, so each commit gets a single Codecov upload.
       - run: npm test
         if: matrix.node != 22
-      - run: npm run test:coverage
+      # JUnit for Codecov Test Analytics. Passing --reporter replaces vitest's defaults,
+      # so default + github-actions are listed explicitly to keep console output and annotations.
+      - run: >-
+          npm run test:coverage --
+          --reporter=default --reporter=github-actions --reporter=junit
+          --outputFile.junit=test-results/junit.xml
         if: matrix.node == 22
       - uses: codecov/codecov-action@v7
         # Fork PRs get no secret; Codecov accepts tokenless uploads for public repos.
@@ -70,6 +75,18 @@ jobs:
         if: matrix.node == 22 && !cancelled()
         with:
           files: ./coverage/lcov.info
+          disable_search: true
+          flags: unit
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+      - uses: codecov/codecov-action@v7
+        # Test Analytics. !cancelled() so failing tests still upload their results;
+        # fail_ci_if_error: false keeps a Codecov outage from failing `test` and `ci-ok`.
+        if: matrix.node == 22 && !cancelled()
+        with:
+          report_type: test_results
+          files: ./test-results/junit.xml
+          disable_search: true
           flags: unit
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
