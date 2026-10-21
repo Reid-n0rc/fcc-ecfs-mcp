@@ -1,5 +1,7 @@
 # fcc-ecfs-mcp
 
+[![codecov](https://codecov.io/gh/Reid-n0rc/fcc-ecfs-mcp/graph/badge.svg)](https://codecov.io/gh/Reid-n0rc/fcc-ecfs-mcp)
+
 An [MCP](https://modelcontextprotocol.io) server for the FCC's [Electronic Comment
 Filing System (ECFS) public API](https://www.fcc.gov/ecfs/help/public_api). Implements
 every endpoint in ECFS's public OpenAPI spec — filings, a single filing, proceedings,
