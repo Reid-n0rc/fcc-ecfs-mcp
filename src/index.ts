@@ -46,7 +46,7 @@ function toErrorResult(error: unknown) {
 export function createServer(): McpServer {
   const server = new McpServer({
     name: "fcc-ecfs-mcp",
-    version: "0.4.0",
+    version: "0.4.1",
   });
 
   server.registerTool(

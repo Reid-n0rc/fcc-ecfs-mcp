@@ -118,7 +118,7 @@ describe("createServer", () => {
   });
 
   it("identifies itself as fcc-ecfs-mcp", () => {
-    expect(client.getServerVersion()).toMatchObject({ name: "fcc-ecfs-mcp", version: "0.4.0" });
+    expect(client.getServerVersion()).toMatchObject({ name: "fcc-ecfs-mcp", version: "0.4.1" });
   });
 
   it("registers every ECFS tool with a title, description and input schema", async () => {
