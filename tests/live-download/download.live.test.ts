@@ -15,7 +15,10 @@ describe("ECFS document download (live)", () => {
   afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
   it("downloads the ARRL's 09-209 comments as a PDF", async () => {
-    const res = await downloadDocument({ id_submission: ID_SUBMISSION, output_dir: dir });
+    const res = await downloadDocument(
+      { id_submission: ID_SUBMISSION },
+      { ...process.env, ECFS_DOWNLOAD_DIR: dir },
+    );
 
     expect(res.filename).toBe("6015544108_7020397485.pdf");
     expect(res.byte_size).toBe(58286);

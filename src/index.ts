@@ -152,7 +152,8 @@ export function createServer(): McpServer {
         "document's position in the filing — the {n} in its " +
         "https://www.fcc.gov/ecfs/document/{id_submission}/{n} location/src URL. Fetches the " +
         "file through a headless Chrome browser (Google Chrome must be installed), so it takes " +
-        "a few seconds per document.",
+        "a few seconds per document. Files are always saved as .pdf inside the user's " +
+        "configured download folder (ECFS_DOWNLOAD_DIR, default ~/Downloads/ecfs).",
       inputSchema: downloadDocumentSchema.shape,
     },
     async (input) => {

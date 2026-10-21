@@ -28,7 +28,7 @@
     "download_dir": {
       "type": "string",
       "title": "Download folder",
-      "description": "Where ecfs_download_document saves files. Defaults to ~/Downloads/ecfs.",
+      "description": "Folder ecfs_download_document saves into; downloads can't go outside it. Defaults to ~/Downloads/ecfs.",
       "default": "~/Downloads/ecfs",
       "required": false
     }
