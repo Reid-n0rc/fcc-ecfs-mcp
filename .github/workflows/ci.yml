@@ -91,15 +91,21 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
       - run: npm run build
-      # Runs the packed bin directly (no `node` in front), the way npx and MCP clients do.
+      # Checks the tarball holds exactly npm's always-included files plus every tracked file
+      # under dist/, so the `files` allowlist can't drift and stray build output can't ship.
+      # Then runs the packed bin directly (no `node` in front), the way npx and MCP clients do.
       # Needs no API key: `initialize` never calls ECFS. One leg is enough; timeout is a backstop.
-      - name: Smoke-test the packed bin
+      - name: Pack, check contents, install and smoke-test the bin
         if: matrix.node == 22
         run: |
-          tmp="$RUNNER_TEMP/bin-smoke"
+          tmp="$RUNNER_TEMP/pack-smoke"
           mkdir -p "$tmp"
-          tarball="$(npm pack --silent --pack-destination "$tmp")"
-          npm install --prefix "$tmp/app" --no-audit --no-fund "$tmp/$tarball"
+          npm pack --json --pack-destination "$tmp" > "$tmp/pack.json"
+          tarball="$tmp/$(jq -r '.[0].filename' "$tmp/pack.json")"
+          jq -r '.[0].files[].path' "$tmp/pack.json" | LC_ALL=C sort > "$tmp/actual.txt"
+          { printf '%s\n' LICENSE README.md package.json; git ls-files dist; } | LC_ALL=C sort > "$tmp/expected.txt"
+          diff -u "$tmp/expected.txt" "$tmp/actual.txt"
+          npm install --prefix "$tmp/app" --no-audit --no-fund "$tarball"
           init='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"smoke","version":"0"}}}'
           out="$(printf '%s\n' "$init" | timeout 15 "$tmp/app/node_modules/.bin/fcc-ecfs-mcp")" || true
           echo "$out"
