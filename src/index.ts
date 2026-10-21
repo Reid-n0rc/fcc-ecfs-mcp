@@ -201,14 +201,29 @@ export function createServer(): McpServer {
   return server;
 }
 
-/** CLI entrypoint: load .env, then serve the MCP protocol over stdio. */
+/**
+ * The `.env` file main() loads, or undefined to skip it. Only a source checkout
+ * (a clone, `claude --plugin-dir`, or a plugin install) has a project root where a
+ * user can keep a `.env`. An npm/npx install lives under node_modules, where nobody
+ * puts one, so it relies only on the env the MCP client passes. Never cwd, which is
+ * whatever directory the client happened to spawn us in.
+ */
+export function envFilePath(moduleUrl: string = import.meta.url): string | undefined {
+  const projectRoot = path.resolve(path.dirname(fileURLToPath(moduleUrl)), "..");
+  if (projectRoot.split(path.sep).includes("node_modules")) return undefined;
+  return path.join(projectRoot, ".env");
+}
+
+/** CLI entrypoint: load .env (source checkouts only), then serve MCP over stdio. */
 export async function main(): Promise<void> {
-  // Load .env from the project root regardless of the process's cwd, so the
-  // server works whether launched via `npm run dev` or as an absolute-path
-  // MCP server command from a client config. Real environment variables
-  // (e.g. set by the MCP client) always take precedence.
-  const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-  loadDotenv({ path: path.join(projectRoot, ".env") });
+  const envFile = envFilePath();
+  if (envFile) {
+    // Every option is explicit, because dotenv also reads DOTENV_* / DOTENV_CONFIG_*
+    // from the environment: DOTENV_DEBUG would print to stdout (the MCP channel) and
+    // DOTENV_OVERRIDE would let the file beat env set by the MCP client. Real
+    // environment variables (e.g. set by the MCP client) always take precedence.
+    loadDotenv({ path: envFile, quiet: true, debug: false, override: false, encoding: "utf8" });
+  }
 
   const server = createServer();
   const transport = new StdioServerTransport();

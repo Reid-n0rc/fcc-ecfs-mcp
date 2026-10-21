@@ -57,7 +57,10 @@ server yourself:
 
 2. Provide the key via the `ECFS_API_KEY` environment variable — **never commit it or
    pass it as a tool argument**. For local development, copy `.env.example` to `.env`
-   (git-ignored) and fill it in.
+   (git-ignored) and fill it in. The server reads `.env` from the root of this checkout,
+   not from the client's working directory, and values in the client's `env` block always
+   win. If you installed the server with npm or npx instead of cloning it, no `.env` is
+   read: set everything in the client's `env` block.
 
 3. Add to your client's MCP config:
 
@@ -155,6 +158,9 @@ since the site refuses the default `HeadlessChrome` one. No window is shown.
   key value before being returned — some ECFS response types (e.g. `type=downloadplan`)
   echo the key back verbatim in generated URLs, so URL-only redaction isn't sufficient.
 - `.env` is git-ignored; only `.env.example` (no real key) is committed.
+- The server never reads a `.env` from its working directory, only the checkout's own
+  `.env`, so it can't pick up unrelated secrets from the project an MCP client was
+  launched in. `DOTENV_*` variables don't affect it.
 
 To report a vulnerability, see [SECURITY.md](SECURITY.md).
 

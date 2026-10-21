@@ -1,5 +1,5 @@
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
@@ -57,7 +57,7 @@ vi.mock("@modelcontextprotocol/sdk/server/stdio.js", () => ({
   },
 }));
 
-import { createServer, main } from "../src/index.js";
+import { createServer, envFilePath, main } from "../src/index.js";
 
 // Snapshot side effects of the import itself, before any test resets the mocks.
 const importSideEffects = {
@@ -186,10 +186,54 @@ describe("main", () => {
   it("loads .env from the project root and connects over stdio", async () => {
     await main();
 
-    expect(loadDotenvMock).toHaveBeenCalledWith({ path: path.join(projectRoot, ".env") });
+    expect(loadDotenvMock).toHaveBeenCalledTimes(1);
+    // Every option explicit, so DOTENV_* variables in the environment can't turn on
+    // stdout debug output or let the file override env set by the MCP client.
+    expect(loadDotenvMock).toHaveBeenCalledWith({
+      path: path.join(projectRoot, ".env"),
+      quiet: true,
+      debug: false,
+      override: false,
+      encoding: "utf8",
+    });
     expect(stdioTransports).toHaveLength(1);
     const transport = stdioTransports[0] as { onmessage?: unknown; close(): Promise<void> };
     expect(transport.onmessage).toBeTypeOf("function");
     await transport.close();
+  });
+});
+
+describe("envFilePath", () => {
+  const tmp = path.resolve("/tmp/envfilepath-test");
+  const moduleUrl = (...segments: string[]) => pathToFileURL(path.join(tmp, ...segments)).href;
+
+  it("uses the .env at the root of a source checkout", () => {
+    expect(envFilePath(moduleUrl("checkout", "dist", "index.js"))).toBe(
+      path.join(tmp, "checkout", ".env"),
+    );
+  });
+
+  it("skips .env for an npm install under node_modules", () => {
+    expect(
+      envFilePath(moduleUrl("app", "node_modules", "fcc-ecfs-mcp", "dist", "index.js")),
+    ).toBeUndefined();
+  });
+
+  it("skips .env for an npx install in the npm cache", () => {
+    expect(
+      envFilePath(
+        moduleUrl("cache", "_npx", "abc123", "node_modules", "fcc-ecfs-mcp", "dist", "index.js"),
+      ),
+    ).toBeUndefined();
+  });
+
+  it("matches node_modules as a whole path segment, not a substring", () => {
+    expect(envFilePath(moduleUrl("my_node_modules_fork", "dist", "index.js"))).toBe(
+      path.join(tmp, "my_node_modules_fork", ".env"),
+    );
+  });
+
+  it("defaults to this module's own project root", () => {
+    expect(envFilePath()).toBe(path.join(projectRoot, ".env"));
   });
 });
