@@ -60,16 +60,18 @@ The owner can hand an approved issue to the
 `claude[bot]`. Because the PR isn't authored by the owner, CODEOWNERS requests the
 owner's review and he can approve and merge it normally.
 
-- **Triggering it.** Only `Reid-n0rc` can. Assign the issue, make sure it has the
-  `software plan approved` label, then add the `agent-go` label. A comment containing
-  `@claude` on such an issue also starts a run. Labels or mentions from anyone else are
-  ignored, and only the owner's comments are passed to Claude.
+- **Triggering it.** Only `Reid-n0rc` can, and only on issues he wrote. Assign the
+  issue, make sure it has the `software plan approved` label, then add the `agent-go`
+  label. A comment containing `@claude` on such an issue also starts a run. Labels or
+  mentions from anyone else are ignored, and only the owner's comments are passed to
+  Claude. To hand over an issue someone else opened, restate it as a new issue written
+  by the owner (the approval label can't stop its author from editing it later).
 - **What it does.** It branches from `main` as `claude/issue-<n>-<slug>`, runs
   `npm run typecheck`, `npm test`, `npm run test:coverage` and `npm run build`, commits
   `dist/` if `src/` changed, and opens one PR into `main` whose body starts with
   `Closes #<n>`. It never merges, approves, labels, tags or releases, and it can't edit
-  `.github/` (the Claude App has no `workflows` permission). It doesn't run the live
-  tests; CI does that on its PR.
+  `.github/` (the Claude App has no `workflows` permission), `package.json` or
+  `package-lock.json`. It doesn't run the live tests; CI does that on its PR.
 - **Reviewing its PR.** Review it like any other. To ask for changes, comment `@claude
   <what to change>` on the PR or on a line of its diff; it pushes to the same branch,
   CI reruns and any earlier approval is dismissed. When it's right, approve and merge.
@@ -80,12 +82,13 @@ owner's review and he can approve and merge it normally.
   needs the live ECFS API during development, or anything the owner wants to drive
   interactively.
 
-The committed `.claude/settings.json` holds permission rules shared by the Action and
-local Claude Code sessions. It denies approving PRs, releases, force or tag pushes,
-pushes to `main`, writes through `gh api`, reading `.env`, and any Bash command that
-names the approval or `agent-go` labels. `gh pr merge` and `--admin` ask first. Personal
-rules go in `.claude/settings.local.json`, which is ignored; they can add to these rules
-but can't lift a deny.
+The committed `.claude/settings.json` holds a few permission rules shared by the Action
+and local Claude Code sessions: `gh pr merge` asks first, and `gh pr review`,
+`gh release`, `gh secret`, `gh auth token` and reading `.env` are denied. It's a
+convenience guardrail, not a security boundary. The real controls are the workflow's own
+tool lists, the Claude App's limited permissions and the `main` rulesets. Personal rules
+go in `.claude/settings.local.json`, which is ignored; they can add to these rules but
+can't lift a deny.
 
 ## Guidelines
 
