@@ -52,6 +52,48 @@ claude --plugin-dir .
    behavior changed.
 6. Open a pull request and fill in the template.
 
+### Claude Code Action (owner only)
+
+The owner can hand an approved issue to the
+[Claude Code Action](https://github.com/anthropics/claude-code-action)
+(`.github/workflows/claude.yml`), which implements it and opens the pull request as
+`claude[bot]`. Because the PR isn't authored by the owner, CODEOWNERS requests the
+owner's review and he can approve and merge it normally.
+
+- **Triggering it.** Only `Reid-n0rc` can, and only on issues he wrote. Assign the
+  issue, make sure it has the `software plan approved` label, then add the `agent-go`
+  label. A comment containing `@claude` on such an issue also starts a run. Labels or
+  mentions from anyone else are ignored, and only the owner's comments are passed to
+  Claude. To hand over an issue someone else opened, restate it as a new issue written
+  by the owner (the approval label can't stop its author from editing it later).
+- **What it does.** It branches from `main` as `claude/issue-<n>-<slug>`, runs
+  `npm run typecheck`, `npm test`, `npm run test:coverage` and `npm run build`, commits
+  `dist/` if `src/` changed, and opens one PR into `main` whose body starts with
+  `Closes #<n>`. It never merges, approves, labels, tags or releases, and it can't edit
+  `.github/` (the Claude App has no `workflows` permission), `package.json` or
+  `package-lock.json`. It doesn't run the live tests; CI does that on its PR.
+- **Reviewing its PR.** Review it like any other. To ask for changes, comment `@claude
+  <what to change>` on the PR or on a line of its diff; it pushes to the same branch,
+  CI reruns and any earlier approval is dismissed. When it's right, approve and merge.
+  `@claude` only works on PRs opened by `claude[bot]`, never on a person's PR.
+- **Stopping it.** Remove `agent-go` (a queued run re-checks the labels and stops), or
+  run `gh workflow disable claude.yml`. Close any unwanted `claude/*` PR.
+- **When to use a local session instead.** Changes to `.github/workflows/`, work that
+  needs the live ECFS API during development, or anything the owner wants to drive
+  interactively.
+
+The committed `.claude/settings.json` holds permission rules shared by the Action and
+local Claude Code sessions. It denies anything that would get around the owner's approval
+gate or rewrite history: Bash commands naming the `software plan approved` or `agent-go`
+labels, `gh label`, force pushes, tag pushes, pushes to `main`, `gh pr review`,
+`gh release`, `gh secret`, `gh auth token` and reading `.env`. Sensitive operations that
+local sessions sometimes need ask first: `gh pr merge` (including `--admin`),
+`gh issue edit`, `gh pr edit`, any `gh api` call, GraphQL and `gh alias`. Do label changes yourself in a
+terminal. These rules are defence in depth, not a security boundary. The real controls are the workflow's own
+tool lists, the Claude App's limited permissions and the `main` rulesets. Personal rules
+go in `.claude/settings.local.json`, which is ignored; they can add to these rules but
+can't lift a deny.
+
 ## Guidelines
 
 - **Keep the API key out of everything.** The key is read only from

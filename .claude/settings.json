@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "ask": [
+      "Bash(gh pr merge:*)",
+      "Bash(*--admin*)",
+      "Bash(gh issue edit:*)",
+      "Bash(gh pr edit:*)",
+      "Bash(*gh api*)",
+      "Bash(*graphql*)",
+      "Bash(*gh alias *)"
+    ],
+    "deny": [
+      "Bash(*software plan approved*)",
+      "Bash(*Software plan approved*)",
+      "Bash(*SOFTWARE PLAN APPROVED*)",
+      "Bash(*agent-go*)",
+      "Bash(gh label:*)",
+      "Bash(git push --force *)",
+      "Bash(git push * --force *)",
+      "Bash(git push * --force)",
+      "Bash(git push -f *)",
+      "Bash(git push * -f *)",
+      "Bash(git push * -f)",
+      "Bash(git push --tags*)",
+      "Bash(git push *--tags*)",
+      "Bash(git push *refs/tags/*)",
+      "Bash(git push origin main*)",
+      "Bash(git push * +main*)",
+      "Bash(gh pr review:*)",
+      "Bash(gh release:*)",
+      "Bash(gh secret:*)",
+      "Bash(gh auth token:*)",
+      "Read(.env)",
+      "Read(.env.*)"
+    ]
+  }
+}
