@@ -6,8 +6,10 @@ export default defineConfig({
     include: ["tests/**/*.test.ts"],
     exclude: ["tests/live/**", "tests/live-download/**"],
     coverage: {
+      provider: "v8",
       reporter: ["text", "lcov"],
       include: ["src/**/*.ts"],
+      reportsDirectory: "coverage",
     },
   },
 });
