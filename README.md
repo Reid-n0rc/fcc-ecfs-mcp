@@ -18,7 +18,7 @@ across all of them.
 | `ecfs_search_proceedings` | `GET /proceedings` | Search proceedings (dockets), e.g. by docket number. |
 | `ecfs_get_download_plan` | `GET /filings?type=downloadplan` | Get date-bucketed queries safe for exhaustively paging a large docket (e.g. a heavily-commented NPRM) — plain offset/limit paging over a big result set can return duplicate or missing filings. |
 | `ecfs_search_documents` | `GET /documents` | List a filing's document/attachment metadata (filename, page count, byte size, OCR status) by submission ID. Does not return file contents — ECFS's public API is metadata-only. |
-| `ecfs_download_document` | ECFS website (headless Chrome) | Download a filing's document (PDF) and save it to disk; returns the saved path, size, and SHA-256. See [Downloading documents](#downloading-documents). |
+| `ecfs_download_document` | ECFS website (headless Chrome) | Download a filing's document (PDF) and save it inside your download folder; returns the saved path, size, and SHA-256. See [Downloading documents](#downloading-documents). |
 | `ecfs_list_inboxes` | `GET /inbox` | List the available inboxes for non-docketed filings. |
 | `ecfs_raw_request` | any | Escape hatch: call any ECFS path/query params not covered above. `api_key` is added automatically. |
 
@@ -141,9 +141,11 @@ refuses non-browser HTTP clients such as `curl` with `403 Forbidden`.
 the PDF the page loads. Headless Chrome is presented under its regular Chrome user agent,
 since the site refuses the default `HeadlessChrome` one. No window is shown.
 
-- Files are saved to `ECFS_DOWNLOAD_DIR` (plugin setting "Download folder"; default
-  `~/Downloads/ecfs`), named `{id_submission}_{ECFS filename}`. The model can pass
-  `output_dir` when you ask for a specific location.
+- Files are always saved inside `ECFS_DOWNLOAD_DIR` (plugin setting "Download folder";
+  default `~/Downloads/ecfs`), named `{id_submission}_{ECFS filename}` and always with a
+  `.pdf` extension. The model can put a file in a subfolder (`output_dir`, e.g. one per
+  docket), but can't save outside the download folder. To save elsewhere, change the
+  setting.
 - Re-downloading an identical file reuses the existing copy; a different file with the
   same name gets a numeric suffix rather than overwriting.
 - Each download takes a few seconds. The tool fetches one document per call; it isn't
@@ -161,6 +163,10 @@ since the site refuses the default `HeadlessChrome` one. No window is shown.
 - The server never reads a `.env` from its working directory, only the checkout's own
   `.env`, so it can't pick up unrelated secrets from the project an MCP client was
   launched in. `DOTENV_*` variables don't affect it.
+- `ecfs_download_document` only writes inside the download folder (`ECFS_DOWNLOAD_DIR`),
+  checked both on the requested path and on its real path after resolving symlinks, and
+  every saved file ends in `.pdf`. Tool arguments can be influenced by filing text the
+  model has read, so the server doesn't trust `output_dir` to point anywhere else.
 
 To report a vulnerability, see [SECURITY.md](SECURITY.md).
 
