@@ -82,10 +82,14 @@ owner's review and he can approve and merge it normally.
   needs the live ECFS API during development, or anything the owner wants to drive
   interactively.
 
-The committed `.claude/settings.json` holds a few permission rules shared by the Action
-and local Claude Code sessions: `gh pr merge` asks first, and `gh pr review`,
-`gh release`, `gh secret`, `gh auth token` and reading `.env` are denied. It's a
-convenience guardrail, not a security boundary. The real controls are the workflow's own
+The committed `.claude/settings.json` holds permission rules shared by the Action and
+local Claude Code sessions. It denies anything that would get around the owner's approval
+gate or rewrite history: Bash commands naming the `software plan approved` or `agent-go`
+labels, `gh label`, force pushes, tag pushes, pushes to `main`, `gh pr review`,
+`gh release`, `gh secret`, `gh auth token` and reading `.env`. Sensitive operations that
+local sessions sometimes need ask first: `gh pr merge` (including `--admin`),
+`gh issue edit`, `gh api` writes, GraphQL and `gh alias`. Do label changes yourself in a
+terminal. These rules are defence in depth, not a security boundary. The real controls are the workflow's own
 tool lists, the Claude App's limited permissions and the `main` rulesets. Personal rules
 go in `.claude/settings.local.json`, which is ignored; they can add to these rules but
 can't lift a deny.
