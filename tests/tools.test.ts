@@ -85,7 +85,7 @@ describe("searchFilings filer-name fallback", () => {
       "proceedings.name": "09-209",
       "filers.name": undefined,
     });
-    expect(res.filing).toHaveLength(1);
+    expect(res.filing).toHaveLength(999);
     expect(res.note).toContain('"ARRL"');
   });
 
