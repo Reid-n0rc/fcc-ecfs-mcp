@@ -16,6 +16,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const launchMock = vi.hoisted(() => vi.fn());
 vi.mock("playwright-core", () => ({ chromium: { launch: launchMock } }));
 
+// mkdir passes through to the real one unless a test overrides it (to simulate a
+// directory being swapped for a symlink between the checks).
+const mkdirMock = vi.hoisted(() => vi.fn());
+vi.mock("node:fs/promises", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:fs/promises")>();
+  mkdirMock.mockImplementation(actual.mkdir);
+  return { ...actual, mkdir: mkdirMock };
+});
+
 import {
   documentUrls,
   downloadDocument,
@@ -357,6 +366,39 @@ describe("downloadDocument", () => {
       ).rejects.toThrow(OUTSIDE);
     }
     expect(readdirSync(elsewhere)).toEqual([]);
+  });
+
+  it("rejects a target that turns into an outside symlink while it's being created", async () => {
+    fakeBrowser({});
+    const elsewhere = path.join(tmp, "elsewhere");
+    mkdirSync(elsewhere);
+    const target = path.join(dir, "race");
+    const realMkdir = mkdirMock.getMockImplementation()!;
+    mkdirMock.mockImplementation(async (p: string, opts: unknown) => {
+      if (p === target) {
+        symlinkSync(elsewhere, target, "dir");
+        return undefined;
+      }
+      return realMkdir(p, opts);
+    });
+
+    try {
+      await expect(
+        downloadDocument({ id_submission: "6015544108", output_dir: "race" }, env),
+      ).rejects.toThrow(OUTSIDE);
+    } finally {
+      mkdirMock.mockImplementation(realMkdir);
+    }
+    expect(readdirSync(elsewhere)).toEqual([]);
+  });
+
+  it("passes on filesystem errors other than a missing directory", async () => {
+    fakeBrowser({});
+    writeFileSync(path.join(dir, "file"), "not a directory");
+
+    await expect(
+      downloadDocument({ id_submission: "6015544108", output_dir: "file/sub" }, env),
+    ).rejects.toMatchObject({ code: "ENOTDIR" });
   });
 
   it("allows a download root that is itself a symlink", async () => {

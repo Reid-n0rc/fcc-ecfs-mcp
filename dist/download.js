@@ -136,8 +136,10 @@ export function pdfFilename(idSubmission, documentNumber, disposition) {
     const name = safeFilename(filenameFromDisposition(disposition), fallback);
     if (name === fallback)
         return fallback;
+    // safeFilename never returns an empty name or one starting with ".", so at least one
+    // character always comes before a trailing ".pdf" and the stem is never empty.
     const stem = name.replace(/\.pdf$/i, "").replace(/\./g, "_").slice(0, MAX_STEM);
-    return stem ? `${idSubmission}_${stem}.pdf` : fallback;
+    return `${idSubmission}_${stem}.pdf`;
 }
 export function isPdf(bytes) {
     return Buffer.from(bytes.subarray(0, 5)).toString("latin1") === "%PDF-";
