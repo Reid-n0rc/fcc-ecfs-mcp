@@ -28,7 +28,7 @@ function toErrorResult(error) {
 export function createServer() {
     const server = new McpServer({
         name: "fcc-ecfs-mcp",
-        version: "0.4.0",
+        version: "0.4.1",
     });
     server.registerTool("ecfs_search_filings", {
         title: "Search ECFS filings",
