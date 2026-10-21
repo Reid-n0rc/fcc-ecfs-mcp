@@ -22,6 +22,8 @@ cp .env.example .env   # then set ECFS_API_KEY in .env
 npm run dev            # run the server directly with tsx
 ```
 
+The server reads `.env` from the repo root whatever the working directory.
+
 To try your changes in Claude Code, rebuild and load the working tree as a plugin:
 
 ```bash

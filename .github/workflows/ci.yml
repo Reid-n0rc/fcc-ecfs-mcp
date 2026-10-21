@@ -95,6 +95,8 @@ jobs:
       # under dist/, so the `files` allowlist can't drift and stray build output can't ship.
       # Then runs the packed bin directly (no `node` in front), the way npx and MCP clients do.
       # Needs no API key: `initialize` never calls ECFS. One leg is enough; timeout is a backstop.
+      # stdout must be pure JSON-RPC, and an installed copy must not load any .env (not even one
+      # planted in node_modules/fcc-ecfs-mcp/), also with DOTENV_* debug/override variables set.
       - name: Pack, check contents, install and smoke-test the bin
         if: matrix.node == 22
         run: |
@@ -107,9 +109,25 @@ jobs:
           diff -u "$tmp/expected.txt" "$tmp/actual.txt"
           npm install --prefix "$tmp/app" --no-audit --no-fund "$tarball"
           init='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"smoke","version":"0"}}}'
-          out="$(printf '%s\n' "$init" | timeout 15 "$tmp/app/node_modules/.bin/fcc-ecfs-mcp")" || true
-          echo "$out"
-          grep -q '"serverInfo":{"name":"fcc-ecfs-mcp"' <<<"$out"
+          printf 'MARKER=planted\n' > "$tmp/app/node_modules/fcc-ecfs-mcp/.env"
+          run_bin() {
+            echo "::group::fcc-ecfs-mcp ${*:-(no extra env)}"
+            printf '%s\n' "$init" | timeout 15 env "$@" "$tmp/app/node_modules/.bin/fcc-ecfs-mcp" \
+              >"$tmp/stdout" 2>"$tmp/stderr" || true
+            cat "$tmp/stdout"; cat "$tmp/stderr" >&2
+            echo "::endgroup::"
+            grep -q '"serverInfo":{"name":"fcc-ecfs-mcp"' "$tmp/stdout"
+            # stdout must be pure JSON-RPC: jq fails on any non-JSON line.
+            jq -e . "$tmp/stdout" >/dev/null
+            # An installed copy must not touch .env, so dotenv logs nothing on either stream.
+            # (`if grep` rather than `! grep`: bash -e ignores a negated command's status.)
+            if grep -E 'injected env|┆' "$tmp/stdout" "$tmp/stderr"; then
+              echo "::error::dotenv wrote output (installed copies must not load .env)"; exit 1
+            fi
+          }
+          run_bin
+          run_bin DOTENV_DEBUG=1 DOTENV_QUIET=false
+          run_bin DOTENV_CONFIG_DEBUG=1 DOTENV_OVERRIDE=1 ECFS_API_KEY=from-client
 
   live:
     # Secrets aren't available to fork PRs, so those skip the live job. Same-repo PRs
