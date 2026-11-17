@@ -151,7 +151,7 @@ jobs:
       # under its control and it needs no `npm ci` permission.
       - run: npm ci
       - name: Run Claude Code
-        uses: anthropics/claude-code-action@61a9c274fa7110a66dfafc1bbbced03833eb25fe # v1.0.269
+        uses: anthropics/claude-code-action@f3b070c88125d33dbae5653df5f143101d4ea9dc # v1.0.276
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           label_trigger: agent-go
